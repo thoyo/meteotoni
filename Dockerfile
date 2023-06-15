@@ -16,6 +16,5 @@ RUN apt update && apt-get -y install ffmpeg
 COPY main.py .
 COPY .env .
 
-# CMD ["python", "-u", "main.py", "new"]
-CMD ["python", "-u", "main.py", "cache"]
+CMD ["python", "-u", "main.py"]
 
