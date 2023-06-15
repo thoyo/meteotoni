@@ -3,17 +3,19 @@ FROM python:3.8
 ENV METEOTONI /opt/meteotoni
 
 RUN mkdir -p $METEOTONI
+WORKDIR $METEOTONI
 
-COPY requirements.txt $METEOTONI/requirements.txt
-COPY main.py $METEOTONI/main.py
-COPY .env $METEOTONI/.env
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
 ENV AM_I_IN_A_DOCKER_CONTAINER Yes
 
-RUN apt update
-RUN apt-get -y install ffmpeg
-RUN pip install -r $METEOTONI/requirements.txt
+RUN apt update && apt-get -y install ffmpeg
 
-WORKDIR $METEOTONI
+# Only copy the code files
+COPY main.py .
+COPY .env .
+
 # CMD ["python", "-u", "main.py", "new"]
 CMD ["python", "-u", "main.py", "cache"]
+

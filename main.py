@@ -23,7 +23,6 @@ INFLUXDBCLIENT = InfluxDBClient(host=INFLUX_HOST, port=INFLUX_PORT, database=INF
 
 load_dotenv()
 
-# Replace TOKEN with your own Telegram API token
 key = os.getenv("API_KEY")
 
 while True:
@@ -34,7 +33,8 @@ while True:
     for day in data["dies"]:
         # Parse the date string into a datetime object
         date = datetime.strptime(day["data"], '%Y-%m-%dZ')
-
+        forecast_age_days = (date -
+                             datetime.combine(datetime.now().date(), datetime.min.time())).total_seconds() / 3600 / 24
         # Format the datetime object as required for InfluxDB
         formatted_date = date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
@@ -43,13 +43,14 @@ while True:
             "fields": {
                 "estat_cel": day["variables"]["estatCel"]["valor"],
                 "precipitacio": day["variables"]["precipitacio"]["valor"],
-                "tmin": day["variable"]["tmin"]["valor"],
-                "tmax": day["variable"]["tmax"]["valor"],
+                "tmin": day["variables"]["tmin"]["valor"],
+                "tmax": day["variables"]["tmax"]["valor"],
+                "forecast_age_days": forecast_age_days,
             },
-            "time": formatted_date
+            "time": formatted_date,
         }
         points.append(point_out)
         ret = INFLUXDBCLIENT.write_points(points)
     pp.pprint(response.json())
-    time.sleep(3600)
 
+    time.sleep(3600 * 12)
