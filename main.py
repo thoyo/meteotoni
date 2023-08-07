@@ -42,9 +42,9 @@ while True:
             "measurement": "forecast",
             "fields": {
                 "estat_cel": day["variables"]["estatCel"]["valor"],
-                "precipitacio": day["variables"]["precipitacio"]["valor"],
-                "tmin": day["variables"]["tmin"]["valor"],
-                "tmax": day["variables"]["tmax"]["valor"],
+                "precipitacio_f": float(day["variables"]["precipitacio"]["valor"]),
+                "tmin_f": float(day["variables"]["tmin"]["valor"]),
+                "tmax_f": float(day["variables"]["tmax"]["valor"]),
                 "forecast_age_days": forecast_age_days,
             },
             "time": formatted_date,
