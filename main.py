@@ -41,14 +41,26 @@ while True:
         point_out = {
             "measurement": "forecast",
             "fields": {
-                "estat_cel": day["variables"]["estatCel"]["valor"],
-                "precipitacio_f": float(day["variables"]["precipitacio"]["valor"]),
-                "tmin_f": float(day["variables"]["tmin"]["valor"]),
-                "tmax_f": float(day["variables"]["tmax"]["valor"]),
+                f"estat_cel_{forecast_age_days}": day["variables"]["estatCel"]["valor"],
+                f"estat_cel": day["variables"]["estatCel"]["valor"],
+                f"precipitacio_f_{forecast_age_days}": float(day["variables"]["precipitacio"]["valor"]),
+                f"precipitacio_f": float(day["variables"]["precipitacio"]["valor"]),
+                f"tmin_f_{forecast_age_days}": float(day["variables"]["tmin"]["valor"]),
+                f"tmin_f": float(day["variables"]["tmin"]["valor"]),
+                f"tmax_f_{forecast_age_days}": float(day["variables"]["tmax"]["valor"]),
+                f"tmax_f": float(day["variables"]["tmax"]["valor"]),
                 "forecast_age_days": forecast_age_days,
             },
             "time": formatted_date,
         }
+        query = f'SELECT * FROM "forecast" WHERE time = \'{formatted_date}\''
+        result_data = INFLUXDBCLIENT.query(query)
+        for result in result_data:
+            for field in result:
+                if field == "time":
+                    continue
+                point_out["fields"][field] = result[field]
+
         points.append(point_out)
         ret = INFLUXDBCLIENT.write_points(points)
     pp.pprint(response.json())
