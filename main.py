@@ -37,6 +37,9 @@ while True:
         "time": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     }
     ret = INFLUXDBCLIENT.write_points([point_out])
+    if response.status_code == 429:
+        time.sleep(3600 * 24)
+        continue
 
     data = response.json()
     points = []
