@@ -28,6 +28,16 @@ key = os.getenv("API_KEY")
 while True:
     url = "https://api.meteo.cat/pronostic/v1/municipal/080193"
     response = requests.get(url, headers={"Content-Type": "application/json", "X-Api-Key": key})
+
+    point_out = {
+        "measurement": "meteocat_api",
+        "fields": {
+            "response_status_code": response.status_code
+        },
+        "time": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    }
+    ret = INFLUXDBCLIENT.write_points([point_out])
+
     data = response.json()
     points = []
     for day in data["dies"]:
@@ -65,4 +75,4 @@ while True:
         ret = INFLUXDBCLIENT.write_points(points)
     pp.pprint(response.json())
 
-    time.sleep(3600 * 12)
+    time.sleep(3600 * 24)
