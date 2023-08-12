@@ -15,7 +15,7 @@ logging.info("Starting program")
 INFLUX_PORT = 8086
 INFLUX_DATABASE = "meteotoni"
 if os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
-    INFLUX_HOST = "influxdb"
+    INFLUX_HOST = "influxdb_mt"
 else:
     INFLUX_HOST = "0.0.0.0"
 
