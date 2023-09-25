@@ -10,9 +10,6 @@ RUN pip install -r requirements.txt
 
 ENV AM_I_IN_A_DOCKER_CONTAINER Yes
 
-RUN apt update && apt-get -y install ffmpeg
-
-# Only copy the code files
 COPY main.py .
 COPY .env .
 

@@ -1,6 +1,5 @@
 from datetime import datetime
 import requests
-import pprint as pp
 from dotenv import load_dotenv
 import os
 import logging
@@ -14,41 +13,49 @@ logging.info("Starting program")
 
 INFLUX_PORT = 8086
 INFLUX_DATABASE = "meteotoni"
+URL = "https://api.meteo.cat/pronostic/v1/municipal/080193"
 if os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
     INFLUX_HOST = "influxdb_mt"
 else:
     INFLUX_HOST = "0.0.0.0"
 
 INFLUXDBCLIENT = InfluxDBClient(host=INFLUX_HOST, port=INFLUX_PORT, database=INFLUX_DATABASE)
+SECONDS_IN_DAY = 3600 * 24
 
 load_dotenv()
 
-key = os.getenv("API_KEY")
+api_key = os.getenv("API_KEY")
 
-while True:
-    url = "https://api.meteo.cat/pronostic/v1/municipal/080193"
-    response = requests.get(url, headers={"Content-Type": "application/json", "X-Api-Key": key})
+
+def main():
+    now = datetime.now()
+    response = requests.get(URL,
+                            headers={"Content-Type": "application/json", "X-Api-Key": api_key})
 
     point_out = {
         "measurement": "meteocat_api",
         "fields": {
             "response_status_code": response.status_code
         },
-        "time": datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        "time": now.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     }
     ret = INFLUXDBCLIENT.write_points([point_out])
+    if not ret:
+        logging.error(f"Failed to write point to Influx: {point_out}")
+    else:
+        logging.info(f"Wrote point to Influx: {point_out}")
+
     if response.status_code == 429:
-        time.sleep(3600 * 24)
-        continue
+        raise Exception("API returned 429 status code")
 
     data = response.json()
     points = []
     for day in data["dies"]:
-        # Parse the date string into a datetime object
         date = datetime.strptime(day["data"], '%Y-%m-%dZ')
-        forecast_age_days = (date -
-                             datetime.combine(datetime.now().date(), datetime.min.time())).total_seconds() / 3600 / 24
-        # Format the datetime object as required for InfluxDB
+        forecast_age_days = int((date -
+                                 datetime.combine(now.date(),
+                                                  datetime.min.time())).total_seconds() / 3600 / 24)
+
         formatted_date = date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
         point_out = {
@@ -66,6 +73,9 @@ while True:
             },
             "time": formatted_date,
         }
+
+        # Gather existing forecast for same day and append to latest obtained ones,
+        # to prevent overwriting existing with latest
         query = f'SELECT * FROM "forecast" WHERE time = \'{formatted_date}\''
         result_data = INFLUXDBCLIENT.query(query)
         for result in result_data:
@@ -76,6 +86,16 @@ while True:
 
         points.append(point_out)
         ret = INFLUXDBCLIENT.write_points(points)
-    pp.pprint(response.json())
+        if not ret:
+            logging.error(f"Failed to write points to Influx: {points}")
+        else:
+            logging.info(f"Wrote points to Influx: {points}")
 
-    time.sleep(3600 * 24)
+
+if __name__ == "__main__":
+    while True:
+        try:
+            main()
+        except Exception as e:
+            logging.error(e)
+        time.sleep(SECONDS_IN_DAY)
