@@ -30,8 +30,7 @@ load_dotenv()
 api_key = os.getenv("API_KEY")
 
 
-def main():
-    now = datetime.now()
+def get_data(now):
     response = requests.get(
         URL, headers={"Content-Type": "application/json", "X-Api-Key": api_key}
     )
@@ -47,10 +46,13 @@ def main():
     else:
         logging.info(f"Wrote point to Influx: {point_out}")
 
-    if response.status_code == 429:
-        raise Exception("API returned 429 status code")
+    if not response.ok:
+        raise Exception(f"API returned {response.status_code} status code")
 
-    data = response.json()
+    return response.json()
+
+
+def process(data, now):
     points = []
     for day in data["dies"]:
         date = datetime.strptime(day["data"], "%Y-%m-%dZ")
@@ -96,6 +98,13 @@ def main():
             logging.error(f"Failed to write points to Influx: {points}")
         else:
             logging.info(f"Wrote points to Influx: {points}")
+
+
+def main():
+    now = datetime.now()
+
+    data = get_data(now)
+    process(data, now)
 
 
 if __name__ == "__main__":
