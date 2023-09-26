@@ -25,7 +25,7 @@ services:
     networks:
       - private
     depends_on:
-      - influxdb
+      - influxdb_mt
     stdin_open: true
     tty: true
     restart: always
