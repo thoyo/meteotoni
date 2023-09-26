@@ -21,19 +21,16 @@ if os.environ.get("AM_I_IN_A_DOCKER_CONTAINER", False):
 else:
     INFLUX_HOST = "0.0.0.0"
 
-INFLUXDBCLIENT = InfluxDBClient(
-    host=INFLUX_HOST, port=INFLUX_PORT, database=INFLUX_DATABASE
-)
+INFLUXDBCLIENT = InfluxDBClient(host=INFLUX_HOST, port=INFLUX_PORT, database=INFLUX_DATABASE)
 SECONDS_IN_DAY = 3600 * 24
+METEOCAT_DATE_FORMAT = "%Y-%m-%dZ"
 
 load_dotenv()
 api_key = os.getenv("API_KEY")
 
 
 def get_data(now):
-    response = requests.get(
-        URL, headers={"Content-Type": "application/json", "X-Api-Key": api_key}
-    )
+    response = requests.get(URL, headers={"Content-Type": "application/json", "X-Api-Key": api_key})
 
     point_out = {
         "measurement": "meteocat_api",
@@ -56,14 +53,12 @@ def process(data, now):
     logging.info(f"Got data {data}")
     points = []
     for day in data["dies"]:
-        date = datetime.strptime(day["data"], "%Y-%m-%dZ")
-        forecast_age_days = int(
-            (date - datetime.combine(now.date(), datetime.min.time())).total_seconds()
-            / 3600
-            / 24
-        )
+        forecast_date = datetime.strptime(day["data"], METEOCAT_DATE_FORMAT)
 
-        formatted_date = date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        time_difference = forecast_date - datetime(now.year, now.month, now.day)
+        forecast_age_days = time_difference.days
+
+        formatted_date = forecast_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         point_out = {
             "measurement": "forecast",
