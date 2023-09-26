@@ -23,7 +23,6 @@ INFLUXDBCLIENT = InfluxDBClient(host=INFLUX_HOST, port=INFLUX_PORT, database=INF
 SECONDS_IN_DAY = 3600 * 24
 
 load_dotenv()
-
 api_key = os.getenv("API_KEY")
 
 
