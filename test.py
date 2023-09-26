@@ -26,6 +26,19 @@ class Test(unittest.TestCase):
             main.URL, headers={"Content-Type": "application/json", "X-Api-Key": api_key}
         )
 
+    @patch("main.INFLUXDBCLIENT")
+    @patch("main.requests.get")
+    def test_failed_to_get_data(self, mock_requests_get, mock_influxdb):
+        mock_influxdb.return_value = Mock()
+
+        mock_response = Mock()
+        mock_response.status_code = 429
+        mock_response.ok = False
+        mock_requests_get.return_value = mock_response
+
+        with self.assertRaises(Exception):
+            main.main()
+
 
 if __name__ == "__main__":
     unittest.main()
