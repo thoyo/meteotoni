@@ -6,20 +6,24 @@ import logging
 from influxdb import InfluxDBClient
 import time
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
-                    level=logging.INFO,
-                    datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 logging.info("Starting program")
 
 INFLUX_PORT = 8086
 INFLUX_DATABASE = "meteotoni"
 URL = "https://api.meteo.cat/pronostic/v1/municipal/080193"
-if os.environ.get('AM_I_IN_A_DOCKER_CONTAINER', False):
+if os.environ.get("AM_I_IN_A_DOCKER_CONTAINER", False):
     INFLUX_HOST = "influxdb_mt"
 else:
     INFLUX_HOST = "0.0.0.0"
 
-INFLUXDBCLIENT = InfluxDBClient(host=INFLUX_HOST, port=INFLUX_PORT, database=INFLUX_DATABASE)
+INFLUXDBCLIENT = InfluxDBClient(
+    host=INFLUX_HOST, port=INFLUX_PORT, database=INFLUX_DATABASE
+)
 SECONDS_IN_DAY = 3600 * 24
 
 load_dotenv()
@@ -28,15 +32,14 @@ api_key = os.getenv("API_KEY")
 
 def main():
     now = datetime.now()
-    response = requests.get(URL,
-                            headers={"Content-Type": "application/json", "X-Api-Key": api_key})
+    response = requests.get(
+        URL, headers={"Content-Type": "application/json", "X-Api-Key": api_key}
+    )
 
     point_out = {
         "measurement": "meteocat_api",
-        "fields": {
-            "response_status_code": response.status_code
-        },
-        "time": now.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        "fields": {"response_status_code": response.status_code},
+        "time": now.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
     }
     ret = INFLUXDBCLIENT.write_points([point_out])
     if not ret:
@@ -50,19 +53,23 @@ def main():
     data = response.json()
     points = []
     for day in data["dies"]:
-        date = datetime.strptime(day["data"], '%Y-%m-%dZ')
-        forecast_age_days = int((date -
-                                 datetime.combine(now.date(),
-                                                  datetime.min.time())).total_seconds() / 3600 / 24)
+        date = datetime.strptime(day["data"], "%Y-%m-%dZ")
+        forecast_age_days = int(
+            (date - datetime.combine(now.date(), datetime.min.time())).total_seconds()
+            / 3600
+            / 24
+        )
 
-        formatted_date = date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        formatted_date = date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         point_out = {
             "measurement": "forecast",
             "fields": {
                 f"estat_cel_{forecast_age_days}": day["variables"]["estatCel"]["valor"],
                 f"estat_cel": day["variables"]["estatCel"]["valor"],
-                f"precipitacio_f_{forecast_age_days}": float(day["variables"]["precipitacio"]["valor"]),
+                f"precipitacio_f_{forecast_age_days}": float(
+                    day["variables"]["precipitacio"]["valor"]
+                ),
                 f"precipitacio_f": float(day["variables"]["precipitacio"]["valor"]),
                 f"tmin_f_{forecast_age_days}": float(day["variables"]["tmin"]["valor"]),
                 f"tmin_f": float(day["variables"]["tmin"]["valor"]),
@@ -75,7 +82,7 @@ def main():
 
         # Gather existing forecast for same day and append to latest obtained ones,
         # to prevent overwriting existing with latest
-        query = f'SELECT * FROM "forecast" WHERE time = \'{formatted_date}\''
+        query = f"SELECT * FROM \"forecast\" WHERE time = '{formatted_date}'"
         result_data = INFLUXDBCLIENT.query(query)
         for result in result_data:
             for field in result:

@@ -9,9 +9,9 @@ load_dotenv()
 api_key = os.getenv("API_KEY")
 
 
-class TestYourCode(unittest.TestCase):
-    @patch('main.INFLUXDBCLIENT')
-    @patch('main.requests.get')
+class Test(unittest.TestCase):
+    @patch("main.INFLUXDBCLIENT")
+    @patch("main.requests.get")
     def test_process_and_insert_data(self, mock_requests_get, mock_influxdb):
         mock_influxdb.return_value = Mock()
 
@@ -22,10 +22,10 @@ class TestYourCode(unittest.TestCase):
 
         main.main()
 
-        mock_requests_get.assert_called_once_with(main.URL,
-                                                  headers={'Content-Type': 'application/json',
-                                                           'X-Api-Key': api_key})
+        mock_requests_get.assert_called_once_with(
+            main.URL, headers={"Content-Type": "application/json", "X-Api-Key": api_key}
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
