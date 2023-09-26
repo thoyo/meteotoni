@@ -53,6 +53,7 @@ def get_data(now):
 
 
 def process(data, now):
+    logging.info(f"Got data {data}")
     points = []
     for day in data["dies"]:
         date = datetime.strptime(day["data"], "%Y-%m-%dZ")
@@ -69,9 +70,7 @@ def process(data, now):
             "fields": {
                 f"estat_cel_{forecast_age_days}": day["variables"]["estatCel"]["valor"],
                 f"estat_cel": day["variables"]["estatCel"]["valor"],
-                f"precipitacio_f_{forecast_age_days}": float(
-                    day["variables"]["precipitacio"]["valor"]
-                ),
+                f"precipitacio_f_{forecast_age_days}": float(day["variables"]["precipitacio"]["valor"]),
                 f"precipitacio_f": float(day["variables"]["precipitacio"]["valor"]),
                 f"tmin_f_{forecast_age_days}": float(day["variables"]["tmin"]["valor"]),
                 f"tmin_f": float(day["variables"]["tmin"]["valor"]),
