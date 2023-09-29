@@ -15,7 +15,8 @@ logging.info("Starting program")
 
 INFLUX_PORT = 8086
 INFLUX_DATABASE = "meteotoni"
-URL = "https://api.meteo.cat/pronostic/v1/municipal/080193"
+URL = "http://simulator:5000/"
+# URL = "https://api.meteo.cat/pronostic/v1/municipal/080193"
 if os.environ.get("AM_I_IN_A_DOCKER_CONTAINER", False):
     INFLUX_HOST = "influxdb_mt"
 else:

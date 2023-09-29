@@ -1,0 +1,15 @@
+version: "2"
+
+services:
+  simulator:
+    image: simulator:0.0.1
+    networks:
+      - private
+    stdin_open: true
+    tty: true
+    restart: always
+    ports:
+      - "5000:5000"
+
+networks:
+  private:
