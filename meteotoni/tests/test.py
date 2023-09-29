@@ -1,6 +1,9 @@
 import unittest
 from unittest.mock import patch, Mock
+import sys
+sys.path.append("..")  # Add the parent directory to the sys.path
 import main
+
 import fixtures
 import os
 from dotenv import load_dotenv
