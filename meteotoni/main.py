@@ -80,12 +80,16 @@ def process(data, now):
         # Gather existing forecast for same day and append to latest obtained ones,
         # to prevent overwriting existing with latest
         query = f"SELECT * FROM \"forecast\" WHERE time = '{formatted_date}'"
-        result_data = INFLUXDBCLIENT.query(query)
-        for result in result_data:
-            for field in result:
-                if field == "time":
-                    continue
-                point_out["fields"][field] = result[field]
+        result_data = list(INFLUXDBCLIENT.query(query).get_points())
+        if len(result_data) == 0:
+            continue
+        if len(result_data) > 1:
+            raise Exception(f"Got unexpected number of items from Influx: {len(result_data)}")
+
+        for field in result_data[0]:
+            if field == "time":
+                continue
+            point_out["fields"][field] = result_data[0][field]
 
         points.append(point_out)
         ret = INFLUXDBCLIENT.write_points(points)
@@ -107,5 +111,5 @@ if __name__ == "__main__":
         try:
             main()
         except Exception as e:
-            logging.error(e)
+            logging.error(e, exc_info=True)
         time.sleep(SECONDS_IN_DAY)
