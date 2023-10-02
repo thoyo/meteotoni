@@ -1,14 +1,20 @@
 from flask import Flask
 import numpy as np
 import datetime
+import json
 
 METEOCAT_DATE_FORMAT = "%Y-%m-%dZ"
 
 app = Flask(__name__)
 
 
-@app.route("/")
-def hello_world():
+@app.route("/referencia/v1/simbols")
+def simbols():
+    return json.load(open("symbols.json"))
+
+
+@app.route("/pronostic/v1/municipal/080193")
+def pronostic():
     return {
         "dies": [
             {
@@ -21,7 +27,7 @@ def hello_world():
                 },
             },
             {
-                "data": (datetime.datetime.now()+datetime.timedelta(days=1)).strftime(METEOCAT_DATE_FORMAT),
+                "data": (datetime.datetime.now() + datetime.timedelta(days=1)).strftime(METEOCAT_DATE_FORMAT),
                 "variables": {
                     "estatCel": {"valor": 10},
                     "precipitacio": {"valor": np.random.uniform(0, 100)},
@@ -30,7 +36,7 @@ def hello_world():
                 },
             },
             {
-                "data": (datetime.datetime.now()+datetime.timedelta(days=2)).strftime(METEOCAT_DATE_FORMAT),
+                "data": (datetime.datetime.now() + datetime.timedelta(days=2)).strftime(METEOCAT_DATE_FORMAT),
                 "variables": {
                     "estatCel": {"valor": 10},
                     "precipitacio": {"valor": np.random.uniform(0, 100)},
@@ -39,7 +45,7 @@ def hello_world():
                 },
             },
             {
-                "data": (datetime.datetime.now()+datetime.timedelta(days=3)).strftime(METEOCAT_DATE_FORMAT),
+                "data": (datetime.datetime.now() + datetime.timedelta(days=3)).strftime(METEOCAT_DATE_FORMAT),
                 "variables": {
                     "estatCel": {"valor": 10},
                     "precipitacio": {"valor": np.random.uniform(0, 100)},
@@ -48,7 +54,7 @@ def hello_world():
                 },
             },
             {
-                "data": (datetime.datetime.now()+datetime.timedelta(days=4)).strftime(METEOCAT_DATE_FORMAT),
+                "data": (datetime.datetime.now() + datetime.timedelta(days=4)).strftime(METEOCAT_DATE_FORMAT),
                 "variables": {
                     "estatCel": {"valor": 10},
                     "precipitacio": {"valor": np.random.uniform(0, 100)},
@@ -57,7 +63,7 @@ def hello_world():
                 },
             },
             {
-                "data": (datetime.datetime.now()+datetime.timedelta(days=5)).strftime(METEOCAT_DATE_FORMAT),
+                "data": (datetime.datetime.now() + datetime.timedelta(days=5)).strftime(METEOCAT_DATE_FORMAT),
                 "variables": {
                     "estatCel": {"valor": 10},
                     "precipitacio": {"valor": np.random.uniform(0, 100)},
@@ -66,7 +72,7 @@ def hello_world():
                 },
             },
             {
-                "data": (datetime.datetime.now()+datetime.timedelta(days=6)).strftime(METEOCAT_DATE_FORMAT),
+                "data": (datetime.datetime.now() + datetime.timedelta(days=6)).strftime(METEOCAT_DATE_FORMAT),
                 "variables": {
                     "estatCel": {"valor": 10},
                     "precipitacio": {"valor": np.random.uniform(0, 100)},
@@ -76,6 +82,7 @@ def hello_world():
             },
         ]
     }
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

@@ -5,6 +5,7 @@ import os
 import logging
 from influxdb import InfluxDBClient
 import time
+import json
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -27,7 +28,7 @@ METEOCAT_DATE_FORMAT = "%Y-%m-%dZ"
 load_dotenv()
 api_key = os.getenv("API_KEY")
 if os.getenv("TEST") == "True":
-    URL = "http://simulator:5000/"
+    URL = "http://simulator:5000/pronostic/v1/municipal/080193"
 else:
     URL = "https://api.meteo.cat/pronostic/v1/municipal/080193"
 
@@ -77,7 +78,7 @@ def process(data, now):
                 "forecast_age_days": forecast_age_days,
             },
             "tags": {
-                "test": os.getenv("TEST")
+                "test": os.getenv("TEST"),
             },
             "time": formatted_date,
         }

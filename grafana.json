@@ -1,0 +1,645 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "d2a29952-9860-4e60-a0ce-74eb03b097dc"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "left",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rain"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 46
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "future"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "past tmin"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "future tmin"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "past tmax"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "future tmax"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 19,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "alias": "past tmin",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "d2a29952-9860-4e60-a0ce-74eb03b097dc"
+          },
+          "hide": false,
+          "query": "select tmin_f from forecast where time<=now()+1d",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        },
+        {
+          "alias": "future tmin",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "d2a29952-9860-4e60-a0ce-74eb03b097dc"
+          },
+          "hide": false,
+          "query": "select tmin_f from forecast where time>=now()-1d",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        },
+        {
+          "alias": "rain",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "d2a29952-9860-4e60-a0ce-74eb03b097dc"
+          },
+          "hide": false,
+          "query": "select precipitacio_f from forecast where time>=now()-1d",
+          "rawQuery": true,
+          "refId": "C",
+          "resultFormat": "time_series"
+        },
+        {
+          "alias": "past tmax",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "d2a29952-9860-4e60-a0ce-74eb03b097dc"
+          },
+          "hide": false,
+          "query": "select tmax_f from forecast where time<=now()+1d",
+          "rawQuery": true,
+          "refId": "D",
+          "resultFormat": "time_series"
+        },
+        {
+          "alias": "future tmax",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "d2a29952-9860-4e60-a0ce-74eb03b097dc"
+          },
+          "hide": false,
+          "query": "select tmax_f from forecast where time>=now()-1d",
+          "rawQuery": true,
+          "refId": "E",
+          "resultFormat": "time_series"
+        }
+      ],
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "d2a29952-9860-4e60-a0ce-74eb03b097dc"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "index": 2,
+                  "text": "Cel serè"
+                },
+                "2": {
+                  "index": 3,
+                  "text": "Núvols alts"
+                },
+                "3": {
+                  "index": 4,
+                  "text": "Entre poc i mig ennuvolat"
+                },
+                "4": {
+                  "index": 5,
+                  "text": "Molt ennuvolat"
+                },
+                "5": {
+                  "index": 6,
+                  "text": "Núvols mitjans amb plugims"
+                },
+                "6": {
+                  "index": 7,
+                  "text": "Pluja"
+                },
+                "7": {
+                  "index": 8,
+                  "text": "Xàfec"
+                },
+                "8": {
+                  "index": 9,
+                  "text": "Tempesta"
+                },
+                "9": {
+                  "index": 10,
+                  "text": "Tempesta amb calamarsa"
+                },
+                "10": {
+                  "index": 11,
+                  "text": "Nevada"
+                },
+                "11": {
+                  "index": 12,
+                  "text": "Boira"
+                },
+                "12": {
+                  "index": 13,
+                  "text": "Boirina"
+                },
+                "13": {
+                  "index": 14,
+                  "text": "Xàfec de neu"
+                },
+                "20": {
+                  "index": 21,
+                  "text": "Entre mig i molt ennuvolat"
+                },
+                "21": {
+                  "index": 22,
+                  "text": "Ennuvolat"
+                },
+                "22": {
+                  "index": 23,
+                  "text": "Calitja"
+                },
+                "23": {
+                  "index": 24,
+                  "text": "Mig ennuvolat amb ruixats"
+                },
+                "24": {
+                  "index": 25,
+                  "text": "Xàfec amb tempesta"
+                },
+                "25": {
+                  "index": 26,
+                  "text": "Xàfec amb tempesta i calamarsa"
+                },
+                "26": {
+                  "index": 27,
+                  "text": "Ruixat de neu"
+                },
+                "27": {
+                  "index": 28,
+                  "text": "Neu feble"
+                },
+                "28": {
+                  "index": 29,
+                  "text": "Xàfec de neu"
+                },
+                "29": {
+                  "index": 30,
+                  "text": "Xàfec daiguaneu"
+                },
+                "30": {
+                  "index": 31,
+                  "text": "Aiguaneu"
+                },
+                "31": {
+                  "index": 32,
+                  "text": "Molt ennuvolat amb ruixats"
+                },
+                "32": {
+                  "index": 33,
+                  "text": "Ennuvolat amb plugims"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 5,
+        "x": 19,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "d2a29952-9860-4e60-a0ce-74eb03b097dc"
+          },
+          "query": "select estat_cel from forecast where time<=now() and time < now() + 1d",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Today",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "d2a29952-9860-4e60-a0ce-74eb03b097dc"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "index": 2,
+                  "text": "Cel serè"
+                },
+                "2": {
+                  "index": 3,
+                  "text": "Núvols alts"
+                },
+                "3": {
+                  "index": 4,
+                  "text": "Entre poc i mig ennuvolat"
+                },
+                "4": {
+                  "index": 5,
+                  "text": "Molt ennuvolat"
+                },
+                "5": {
+                  "index": 6,
+                  "text": "Núvols mitjans amb plugims"
+                },
+                "6": {
+                  "index": 7,
+                  "text": "Pluja"
+                },
+                "7": {
+                  "index": 8,
+                  "text": "Xàfec"
+                },
+                "8": {
+                  "index": 9,
+                  "text": "Tempesta"
+                },
+                "9": {
+                  "index": 10,
+                  "text": "Tempesta amb calamarsa"
+                },
+                "10": {
+                  "index": 11,
+                  "text": "Nevada"
+                },
+                "11": {
+                  "index": 12,
+                  "text": "Boira"
+                },
+                "12": {
+                  "index": 13,
+                  "text": "Boirina"
+                },
+                "13": {
+                  "index": 14,
+                  "text": "Xàfec de neu"
+                },
+                "20": {
+                  "index": 21,
+                  "text": "Entre mig i molt ennuvolat"
+                },
+                "21": {
+                  "index": 22,
+                  "text": "Ennuvolat"
+                },
+                "22": {
+                  "index": 23,
+                  "text": "Calitja"
+                },
+                "23": {
+                  "index": 24,
+                  "text": "Mig ennuvolat amb ruixats"
+                },
+                "24": {
+                  "index": 25,
+                  "text": "Xàfec amb tempesta"
+                },
+                "25": {
+                  "index": 26,
+                  "text": "Xàfec amb tempesta i calamarsa"
+                },
+                "26": {
+                  "index": 27,
+                  "text": "Ruixat de neu"
+                },
+                "27": {
+                  "index": 28,
+                  "text": "Neu feble"
+                },
+                "28": {
+                  "index": 29,
+                  "text": "Xàfec de neu"
+                },
+                "29": {
+                  "index": 30,
+                  "text": "Xàfec daiguaneu"
+                },
+                "30": {
+                  "index": 31,
+                  "text": "Aiguaneu"
+                },
+                "31": {
+                  "index": 32,
+                  "text": "Molt ennuvolat amb ruixats"
+                },
+                "32": {
+                  "index": 33,
+                  "text": "Ennuvolat amb plugims"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 5,
+        "x": 19,
+        "y": 5
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "d2a29952-9860-4e60-a0ce-74eb03b097dc"
+          },
+          "query": "select estat_cel from forecast where time<=now() +1d and time < now() + 2d",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Tomorrow",
+      "type": "stat"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now+7d"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "meteotoni",
+  "uid": "c15c9c2a-ed39-4e80-9778-e8749d334f8e",
+  "version": 11,
+  "weekStart": ""
+}
