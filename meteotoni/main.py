@@ -15,8 +15,6 @@ logging.info("Starting program")
 
 INFLUX_PORT = 8086
 INFLUX_DATABASE = "meteotoni"
-URL = "http://simulator:5000/"
-# URL = "https://api.meteo.cat/pronostic/v1/municipal/080193"
 if os.environ.get("AM_I_IN_A_DOCKER_CONTAINER", False):
     INFLUX_HOST = "influxdb_mt"
 else:
@@ -28,6 +26,10 @@ METEOCAT_DATE_FORMAT = "%Y-%m-%dZ"
 
 load_dotenv()
 api_key = os.getenv("API_KEY")
+if os.getenv("TEST") == "True":
+    URL = "http://simulator:5000/"
+else:
+    URL = "https://api.meteo.cat/pronostic/v1/municipal/080193"
 
 
 def get_data(now):
@@ -74,6 +76,9 @@ def process(data, now):
                 f"tmax_f": float(day["variables"]["tmax"]["valor"]),
                 "forecast_age_days": forecast_age_days,
             },
+            "tags": {
+                "test": os.getenv("TEST")
+            },
             "time": formatted_date,
         }
 
@@ -81,15 +86,13 @@ def process(data, now):
         # to prevent overwriting existing with latest
         query = f"SELECT * FROM \"forecast\" WHERE time = '{formatted_date}'"
         result_data = list(INFLUXDBCLIENT.query(query).get_points())
-        if len(result_data) == 0:
-            continue
         if len(result_data) > 1:
             raise Exception(f"Got unexpected number of items from Influx: {len(result_data)}")
-
-        for field in result_data[0]:
-            if field == "time":
-                continue
-            point_out["fields"][field] = result_data[0][field]
+        if len(result_data) == 1:
+            for field in result_data[0]:
+                if field == "time":
+                    continue
+                point_out["fields"][field] = result_data[0][field]
 
         points.append(point_out)
         ret = INFLUXDBCLIENT.write_points(points)
