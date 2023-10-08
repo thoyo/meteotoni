@@ -93,6 +93,10 @@ def process(data, now):
             for field in result_data[0]:
                 if field == "time":
                     continue
+                if result_data[0][field] is None:
+                    continue
+                if field in ["estat_cel", "precipitacio_f", "tmin_f", "tmax_f", "forecast_age_days"]:
+                    continue
                 point_out["fields"][field] = result_data[0][field]
 
         points.append(point_out)
