@@ -77,8 +77,9 @@ def process(data, now):
             },
             "time": formatted_date,
         }
+        points.append(point_out)
 
-        # Gather existing forecast for same day and append to latest obtained ones,
+        # # Gather existing forecast for same day and append to latest obtained ones,
         # to prevent overwriting existing with latest
         query = f"SELECT * FROM \"forecast\" WHERE time = '{formatted_date}'"
         result_data = list(INFLUXDBCLIENT.query(query).get_points())
