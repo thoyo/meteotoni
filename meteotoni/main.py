@@ -59,8 +59,7 @@ def process(data, now):
     for day in data["dies"]:
         forecast_date = datetime.strptime(day["data"], METEOCAT_DATE_FORMAT)
 
-        time_difference = forecast_date - datetime(now.year, now.month, now.day)
-        forecast_age_days = time_difference.days
+        forecast_age_days = (forecast_date - datetime(now.year, now.month, now.day)).days
 
         formatted_date = forecast_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
@@ -75,10 +74,6 @@ def process(data, now):
                 f"tmin_f": float(day["variables"]["tmin"]["valor"]),
                 f"tmax_f_{forecast_age_days}": float(day["variables"]["tmax"]["valor"]),
                 f"tmax_f": float(day["variables"]["tmax"]["valor"]),
-                "forecast_age_days": forecast_age_days,
-            },
-            "tags": {
-                "test": os.getenv("TEST"),
             },
             "time": formatted_date,
         }
