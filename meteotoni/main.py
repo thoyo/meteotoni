@@ -39,9 +39,14 @@ else:
 def get_data(now):
     response = requests.get(URL, headers={"Content-Type": "application/json", "X-Api-Key": api_key})
 
+    formatted_date = datetime(now.year, now.month, 1, 0, 0, 0).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    query = f"SELECT response_status_code FROM \"meteocat_api\" WHERE time >= '{formatted_date}'"
+    queries_this_month = len(list(INFLUXDBCLIENT.query(query).get_points()))
+
     point_out = {
         "measurement": "meteocat_api",
-        "fields": {"response_status_code": response.status_code},
+        "fields": {"response_status_code": response.status_code,
+                   "queries_this_month": queries_this_month},
         "time": now.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
     }
     ret = INFLUXDBCLIENT.write_points([point_out])
@@ -58,8 +63,9 @@ def get_data(now):
 
 def process(data, now):
     logging.info(f"Got data {json.dumps(data, indent=4)}")
-    points = []
     for day in data["dies"]:
+        points = []
+        logging.info(f"Processing day {day['data']}")
         forecast_date = datetime.strptime(day["data"], METEOCAT_DATE_FORMAT)
 
         forecast_age_days = (forecast_date - datetime(now.year, now.month, now.day)).days
