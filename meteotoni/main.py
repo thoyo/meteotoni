@@ -80,7 +80,6 @@ def process(data, now):
             },
             "time": formatted_date,
         }
-        points.append(point_out)
 
         # # Gather existing forecast for same day and append to latest obtained ones,
         # to prevent overwriting existing with latest
