@@ -94,7 +94,7 @@ def process(data, now):
                 if field in ["time", "estat_cel", "precipitacio_f", "tmin_f", "tmax_f"]:
                     continue
                 point_out["fields"][field] = result_data[0][field]
-                if forecast_age_days == 0 and field[:9] != "estat_cel":
+                if forecast_age_days == 0 and field[:9] != "estat_cel" and "err" not in field:
                     match = re.search(PATTERN, field)
                     age = match.group(2)
                     if int(age) == 0:
