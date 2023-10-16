@@ -46,9 +46,9 @@ def get_data(now):
     }
     ret = INFLUXDBCLIENT.write_points([point_out])
     if not ret:
-        logging.error(f"Failed to write point to Influx: {point_out}")
+        logging.error(f"Failed to write point to Influx: {json.dumps(point_out, indent=4)}")
     else:
-        logging.info(f"Wrote point to Influx: {point_out}")
+        logging.info(f"Wrote point to Influx: {json.dumps(point_out, indent=4)}")
 
     if not response.ok:
         raise Exception(f"API returned {response.status_code} status code")
@@ -57,7 +57,7 @@ def get_data(now):
 
 
 def process(data, now):
-    logging.info(f"Got data {data}")
+    logging.info(f"Got data {json.dumps(data, indent=4)}")
     points = []
     for day in data["dies"]:
         forecast_date = datetime.strptime(day["data"], METEOCAT_DATE_FORMAT)
@@ -105,7 +105,7 @@ def process(data, now):
         points.append(point_out)
         ret = INFLUXDBCLIENT.write_points(points)
         if not ret:
-            logging.error(f"Failed to write points to Influx: {points}")
+            logging.error(f"Failed to write points to Influx: {json.dumps(points, indent=4)}")
         else:
             logging.info(f"Wrote points to Influx: {json.dumps(points, indent=4)}")
 
