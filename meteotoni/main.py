@@ -5,7 +5,9 @@ import os
 import logging
 from influxdb import InfluxDBClient
 import time
+import re
 import json
+
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -24,6 +26,7 @@ else:
 INFLUXDBCLIENT = InfluxDBClient(host=INFLUX_HOST, port=INFLUX_PORT, database=INFLUX_DATABASE)
 SECONDS_IN_DAY = 3600 * 24
 METEOCAT_DATE_FORMAT = "%Y-%m-%dZ"
+PATTERN = r"([a-zA-Z_]+_f)_(\d+)"
 
 load_dotenv()
 api_key = os.getenv("API_KEY")
@@ -87,20 +90,25 @@ def process(data, now):
             raise Exception(f"Got unexpected number of items from Influx: {len(result_data)}")
         if len(result_data) == 1:
             for field in result_data[0]:
-                if field == "time":
-                    continue
                 if result_data[0][field] is None:
                     continue
-                if field in ["estat_cel", "precipitacio_f", "tmin_f", "tmax_f", "forecast_age_days"]:
+                if field in ["time", "estat_cel", "precipitacio_f", "tmin_f", "tmax_f"]:
                     continue
                 point_out["fields"][field] = result_data[0][field]
+                if forecast_age_days == 0 and field[:9] != "estat_cel":
+                    match = re.search(PATTERN, field)
+                    age = match.group(2)
+                    if int(age) == 0:
+                        continue
+                    point_out["fields"][f"{field}_err"] = (point_out["fields"][field] -
+                                                           point_out["fields"][f"{match.group(1)}_0"])
 
         points.append(point_out)
         ret = INFLUXDBCLIENT.write_points(points)
         if not ret:
             logging.error(f"Failed to write points to Influx: {points}")
         else:
-            logging.info(f"Wrote points to Influx: {points}")
+            logging.info(f"Wrote points to Influx: {json.dumps(points, indent=4)}")
 
 
 def main():
