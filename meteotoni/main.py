@@ -5,7 +5,9 @@ import os
 import logging
 from influxdb import InfluxDBClient
 import time
+import re
 import json
+
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -24,6 +26,7 @@ else:
 INFLUXDBCLIENT = InfluxDBClient(host=INFLUX_HOST, port=INFLUX_PORT, database=INFLUX_DATABASE)
 SECONDS_IN_DAY = 3600 * 24
 METEOCAT_DATE_FORMAT = "%Y-%m-%dZ"
+PATTERN = r"([a-zA-Z_]+_f)_(\d+)"
 
 load_dotenv()
 api_key = os.getenv("API_KEY")
@@ -36,16 +39,21 @@ else:
 def get_data(now):
     response = requests.get(URL, headers={"Content-Type": "application/json", "X-Api-Key": api_key})
 
+    formatted_date = datetime(now.year, now.month, 1, 0, 0, 0).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    query = f"SELECT response_status_code FROM \"meteocat_api\" WHERE time >= '{formatted_date}'"
+    queries_this_month = len(list(INFLUXDBCLIENT.query(query).get_points()))
+
     point_out = {
         "measurement": "meteocat_api",
-        "fields": {"response_status_code": response.status_code},
+        "fields": {"response_status_code": response.status_code,
+                   "queries_this_month": queries_this_month},
         "time": now.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
     }
     ret = INFLUXDBCLIENT.write_points([point_out])
     if not ret:
-        logging.error(f"Failed to write point to Influx: {point_out}")
+        logging.error(f"Failed to write point to Influx: {json.dumps(point_out, indent=4)}")
     else:
-        logging.info(f"Wrote point to Influx: {point_out}")
+        logging.info(f"Wrote point to Influx: {json.dumps(point_out, indent=4)}")
 
     if not response.ok:
         raise Exception(f"API returned {response.status_code} status code")
@@ -54,9 +62,10 @@ def get_data(now):
 
 
 def process(data, now):
-    logging.info(f"Got data {data}")
-    points = []
+    logging.info(f"Got data {json.dumps(data, indent=4)}")
     for day in data["dies"]:
+        points = []
+        logging.info(f"Processing day {day['data']}")
         forecast_date = datetime.strptime(day["data"], METEOCAT_DATE_FORMAT)
 
         forecast_age_days = (forecast_date - datetime(now.year, now.month, now.day)).days
@@ -77,7 +86,6 @@ def process(data, now):
             },
             "time": formatted_date,
         }
-        points.append(point_out)
 
         # # Gather existing forecast for same day and append to latest obtained ones,
         # to prevent overwriting existing with latest
@@ -87,20 +95,25 @@ def process(data, now):
             raise Exception(f"Got unexpected number of items from Influx: {len(result_data)}")
         if len(result_data) == 1:
             for field in result_data[0]:
-                if field == "time":
-                    continue
                 if result_data[0][field] is None:
                     continue
-                if field in ["estat_cel", "precipitacio_f", "tmin_f", "tmax_f", "forecast_age_days"]:
+                if field in ["time", "estat_cel", "precipitacio_f", "tmin_f", "tmax_f"]:
                     continue
                 point_out["fields"][field] = result_data[0][field]
+                if forecast_age_days == 0 and field[:9] != "estat_cel" and "err" not in field:
+                    match = re.search(PATTERN, field)
+                    age = match.group(2)
+                    if int(age) == 0:
+                        continue
+                    point_out["fields"][f"{field}_err"] = (point_out["fields"][field] -
+                                                           point_out["fields"][f"{match.group(1)}_0"])
 
         points.append(point_out)
         ret = INFLUXDBCLIENT.write_points(points)
         if not ret:
-            logging.error(f"Failed to write points to Influx: {points}")
+            logging.error(f"Failed to write points to Influx: {json.dumps(points, indent=4)}")
         else:
-            logging.info(f"Wrote points to Influx: {points}")
+            logging.info(f"Wrote points to Influx: {json.dumps(points, indent=4)}")
 
 
 def main():
