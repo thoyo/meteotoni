@@ -159,7 +159,7 @@ def process_data_hourly(data):
 
                 point_out = {
                     "measurement": "forecast_hourly",
-                    "fields": {variable: hour["valor"]},
+                    "fields": {variable: float(hour["valor"])},
                     "time": formatted_date,
                 }
 
