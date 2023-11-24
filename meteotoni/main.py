@@ -8,7 +8,6 @@ import time
 import re
 import json
 
-
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
     level=logging.INFO,
@@ -26,20 +25,23 @@ else:
 INFLUXDBCLIENT = InfluxDBClient(host=INFLUX_HOST, port=INFLUX_PORT, database=INFLUX_DATABASE)
 SECONDS_IN_DAY = 3600 * 24
 METEOCAT_DATE_FORMAT = "%Y-%m-%dZ"
+METEOCAT_DATE_HOUR_FORMAT = "%Y-%m-%dT%H:%MZ"
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 PATTERN = r"([a-zA-Z_]+_f)_(\d+)"
 
 load_dotenv()
 api_key = os.getenv("API_KEY")
+BARCELONA_CODE = "080193"
 if os.getenv("TEST") == "True":
-    URL = "http://simulator:5000/pronostic/v1/municipal/080193"
+    BASE_URL = "http://simulator:5000/pronostic/v1/municipal"
 else:
-    URL = "https://api.meteo.cat/pronostic/v1/municipal/080193"
+    BASE_URL = "https://api.meteo.cat/pronostic/v1/municipal"
 
 
-def get_data(now):
-    response = requests.get(URL, headers={"Content-Type": "application/json", "X-Api-Key": api_key})
+def get_data_daily(now):
+    response = requests.get(f"{BASE_URL}/{BARCELONA_CODE}", headers={"Content-Type": "application/json", "X-Api-Key": api_key})
 
-    formatted_date = datetime(now.year, now.month, 1, 0, 0, 0).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    formatted_date = datetime(now.year, now.month, 1, 0, 0, 0).strftime(DATETIME_FORMAT)
     query = f"SELECT response_status_code FROM \"meteocat_api\" WHERE time >= '{formatted_date}'"
     queries_this_month = len(list(INFLUXDBCLIENT.query(query).get_points()))
 
@@ -47,7 +49,7 @@ def get_data(now):
         "measurement": "meteocat_api",
         "fields": {"response_status_code": response.status_code,
                    "queries_this_month": queries_this_month},
-        "time": now.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+        "time": now.strftime(DATETIME_FORMAT)
     }
     ret = INFLUXDBCLIENT.write_points([point_out])
     if not ret:
@@ -61,7 +63,7 @@ def get_data(now):
     return response.json()
 
 
-def process(data, now):
+def process_data_daily(data, now):
     logging.info(f"Got data {json.dumps(data, indent=4)}")
     for day in data["dies"]:
         points = []
@@ -70,7 +72,7 @@ def process(data, now):
 
         forecast_age_days = (forecast_date - datetime(now.year, now.month, now.day)).days
 
-        formatted_date = forecast_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        formatted_date = forecast_date.strftime(DATETIME_FORMAT)
 
         point_out = {
             "measurement": "forecast",
@@ -116,11 +118,67 @@ def process(data, now):
             logging.info(f"Wrote points to Influx: {json.dumps(points, indent=4)}")
 
 
+def get_data_hourly(now):
+    response = requests.get(f"{BASE_URL}Horaria/{BARCELONA_CODE}", headers={"Content-Type": "application/json", "X-Api-Key": api_key})
+
+    formatted_date = datetime(now.year, now.month, 1, 0, 0, 0).strftime(DATETIME_FORMAT)
+    query = f"SELECT response_status_code FROM \"meteocat_api\" WHERE time >= '{formatted_date}'"
+    queries_this_month = len(list(INFLUXDBCLIENT.query(query).get_points()))
+
+    point_out = {
+        "measurement": "meteocat_api",
+        "fields": {"response_status_code": response.status_code,
+                   "queries_this_month": queries_this_month},
+        "time": now.strftime(DATETIME_FORMAT)
+    }
+    ret = INFLUXDBCLIENT.write_points([point_out])
+    if not ret:
+        logging.error(f"Failed to write point to Influx: {json.dumps(point_out, indent=4)}")
+    else:
+        logging.info(f"Wrote point to Influx: {json.dumps(point_out, indent=4)}")
+
+    if not response.ok:
+        raise Exception(f"API returned {response.status_code} status code")
+
+    return response.json()
+
+
+def process_data_hourly(data):
+    logging.info(f"Got data {json.dumps(data, indent=4)}")
+    for day in data["dies"]:
+        points = []
+        for variable in ["estatCel", "precipitacio", "temp", "tempXafogor", "velVent", "dirVent", "humitat"]:
+            values = day["variables"][variable].get("valors")
+            if values is None:
+                # Handle inconsistencies in response, sometimes encoding under valor, others valors
+                values = day["variables"][variable].get("valor")
+            for hour in values:
+                logging.info(f"Processing hour {hour['data']}")
+                forecast_date = datetime.strptime(hour["data"], METEOCAT_DATE_HOUR_FORMAT)
+                formatted_date = forecast_date.strftime(DATETIME_FORMAT)
+
+                point_out = {
+                    "measurement": "forecast_hourly",
+                    "fields": {variable: hour["valor"]},
+                    "time": formatted_date,
+                }
+
+                points.append(point_out)
+        ret = INFLUXDBCLIENT.write_points(points)
+        if not ret:
+            logging.error(f"Failed to write points to Influx: {json.dumps(points, indent=4)}")
+        else:
+            logging.info(f"Wrote points to Influx: {json.dumps(points, indent=4)}")
+
+
 def main():
     now = datetime.now()
 
-    data = get_data(now)
-    process(data, now)
+    data_hourly = get_data_hourly(now)
+    process_data_hourly(data_hourly)
+
+    data_daily = get_data_daily(now)
+    process_data_daily(data_daily, now)
 
 
 if __name__ == "__main__":
