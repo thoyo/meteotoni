@@ -48,8 +48,8 @@ def get_data_daily(now):
     point_out = {
         "measurement": "meteocat_api",
         "fields": {"response_status_code": response.status_code,
-                   "queries_this_month": queries_this_month},
-        "time": now.strftime(DATETIME_FORMAT)
+                   "queries_this_month": queries_this_month + 1},
+        "time": datetime.now().strftime(DATETIME_FORMAT)
     }
     ret = INFLUXDBCLIENT.write_points([point_out])
     if not ret:
@@ -128,8 +128,8 @@ def get_data_hourly(now):
     point_out = {
         "measurement": "meteocat_api",
         "fields": {"response_status_code": response.status_code,
-                   "queries_this_month": queries_this_month},
-        "time": now.strftime(DATETIME_FORMAT)
+                   "queries_this_month": queries_this_month + 1},
+        "time": datetime.now().strftime(DATETIME_FORMAT)
     }
     ret = INFLUXDBCLIENT.write_points([point_out])
     if not ret:
